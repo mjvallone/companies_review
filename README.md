@@ -16,6 +16,6 @@
         pip install -r requirements.txt
 
 
-4. Run main.py with a company name to get it review
+4. Run main.py with streamlit and get a company review!
 
-        python main.py company_name
+        streamlit run main.py

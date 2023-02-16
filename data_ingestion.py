@@ -5,6 +5,7 @@ import time
 import tweepy
 import pandas as pd
 
+
 TWEETS_TO_GET = 10
 
 def get_linkedin_data(company_name):
@@ -86,5 +87,4 @@ def get_twitter_data(company_name):
     tweet_list = []
     extract_useful_data(hashtag_tweets, tweet_list)
     extract_useful_data(oficial_mention_tweets, tweet_list)
-
     return pd.DataFrame(tweet_list)
