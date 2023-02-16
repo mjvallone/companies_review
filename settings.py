@@ -1,0 +1,3 @@
+TWITTER_CONSUMER_KEY = "change-me"
+TWITTER_CONSUMER_SECRET = "change-me"
+LANGUAGE='en'
