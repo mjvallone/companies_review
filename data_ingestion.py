@@ -37,7 +37,7 @@ def get_linkedin_data(company_name):
     return data
 
 
-def query_tweets(api, query):
+def query_tweets(api, query, result_type='mixed'):
     query = query + ' -filter:retweets'
 
     # Helper function for handling pagination in our search and handle rate limits
@@ -55,7 +55,7 @@ def query_tweets(api, query):
     return limit_handled(tweepy.Cursor(api.search_tweets,
                             q=query,
                             lang=settings.LANGUAGE,
-                            result_type="mixed").items(TWEETS_TO_GET))
+                            result_type=result_type).items(TWEETS_TO_GET))
 
 
 def extract_useful_data(tweets, tweet_list):
@@ -80,16 +80,22 @@ def extract_useful_data(tweets, tweet_list):
 
 
 def get_twitter_data(company_name):
+    #API limit:  900 requests/15 minutes are allowed
+    # Twitter’s standard search API only “searches against a sampling of recent Tweets published in the past 7 days.”
     auth = tweepy.AppAuthHandler(settings.TWITTER_CONSUMER_KEY, settings.TWITTER_CONSUMER_SECRET)
 
     api = tweepy.API(auth, wait_on_rate_limit=True)
     if not api:
         print("Check you authentication data")
 
-    hashtag_tweets = query_tweets(api, f'#{company_name}')
-    oficial_mention_tweets = query_tweets(api, f'@{company_name}')
+    hashtag_popular_tweets = query_tweets(api, f'#{company_name}', 'popular')
+    hashtag_recent_tweets = query_tweets(api, f'#{company_name}', 'recent')
+    oficial_popular_mention_tweets = query_tweets(api, f'@{company_name}', 'popular')
+    oficial_recent_mention_tweets = query_tweets(api, f'@{company_name}', 'recent')
 
     tweet_list = []
-    extract_useful_data(hashtag_tweets, tweet_list)
-    extract_useful_data(oficial_mention_tweets, tweet_list)
+    extract_useful_data(hashtag_popular_tweets, tweet_list)
+    extract_useful_data(hashtag_recent_tweets, tweet_list)
+    extract_useful_data(oficial_popular_mention_tweets, tweet_list)
+    extract_useful_data(oficial_recent_mention_tweets, tweet_list)
     return pd.DataFrame(tweet_list)
