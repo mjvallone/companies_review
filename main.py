@@ -16,7 +16,11 @@ def ingest_data(progress_bar, company_name):
   return linkedin_data, twitter_data
 
 
-def transform_data(progress_bar,linkedin_data, twitter_data):
+def clean_and_transform_data(progress_bar,linkedin_data, twitter_data):
+  # TODO I've seen company's ads or claims in tweets, should we clean them?
+  # e.g. @amazon i want to return my product boat smart watch pls help this is my register no.8787042107
+  # Amazon Free Same Day Delivery and Free One Day  with Amazon Prime.  Learn More Here. https://t.co/9Up3AX0sua via @amazon
+  
   # TODO we could calculate here general index, get sentiment out of data texts
   update_progress_bar(progress_bar, 70, "Transforming data")
   return linkedin_data, twitter_data
@@ -32,7 +36,7 @@ def show_data(linkedin_data, twitter_data):
 def get_company_review(company_name):
   progress_bar = st.progress(0, text="Searching data...")
   linkedin_data, twitter_data = ingest_data(progress_bar, company_name)
-  transform_data(progress_bar, linkedin_data, twitter_data)
+  clean_and_transform_data(progress_bar, linkedin_data, twitter_data)
   update_progress_bar(progress_bar, 100, "Process finished")
   show_data(linkedin_data, twitter_data)
 

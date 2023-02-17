@@ -6,7 +6,7 @@ import tweepy
 import pandas as pd
 
 
-TWEETS_TO_GET = 10
+TWEETS_TO_GET = 100
 
 def get_linkedin_data(company_name):
     return [] #FIXME testing purposes while waiting for api key
@@ -61,16 +61,21 @@ def query_tweets(api, query):
 def extract_useful_data(tweets, tweet_list):
     # https://developer.twitter.com/en/docs/twitter-api/v1/tweets/search/api-reference/get-search-tweets#example-response
     for tweet in tweets:
+
         tweet_dict = {
             'text': tweet.text,
             'user_location': tweet.user.location,
             'date': tweet.created_at,
             'is_popular': tweet.metadata['result_type'] == 'popular', #could this be a "weight" to be considered?
             'retweets': tweet.retweet_count, #could this be a "weight" to be considered?
-            'favorites': tweet.favorite_count, #could this be a "weight" to be considered?
-            'location_geo': tweet.geo,
-            'location_coord': tweet.coordinates
+            'favorites': tweet.favorite_count #could this be a "weight" to be considered?
         }
+        if tweet.place is not None:
+            tweet_dict['place_fullname'] = tweet.place.full_name
+            tweet_dict['country_code'] = tweet.place.country_code
+            tweet_dict['country'] = tweet.place.country
+            tweet_dict['place_type'] = tweet.place.place_type
+            tweet_dict['coordinates'] = tweet.place.bounding_box.coordinates
         tweet_list.append(tweet_dict)
 
 
