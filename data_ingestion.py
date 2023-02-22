@@ -4,35 +4,49 @@ import json
 import time
 import tweepy
 import pandas as pd
+from requests_oauthlib import OAuth2Session
 
 TWEETS_TO_GET = 10
 
-def get_linkedin_data(company_name):
-    return [] #FIXME testing purposes while waiting for api key
-    linkedin_api_key='' #TODO waiting for api key approval 
+def get_linkedin_api_key(scope):
+    redirect_uri = settings.LINKEDIN_REDIRECT_URL
+    client_id = settings.LINKEDIN_CLIENT_ID
+    client_secret = settings.LINKEDIN_CLIENT_SECRET
+    linkedin = OAuth2Session(client_id, redirect_uri=redirect_uri, scope=scope)
+    authorization_url, state = linkedin.authorization_url('https://www.linkedin.com/oauth/v2/authorization')
+    print (authorization_url)
+    authorization_response = input('Enter redirection URL: ')
+    token = linkedin.fetch_token('https://www.linkedin.com/oauth/v2/accessToken',
+                             authorization_response=authorization_response,
+                             include_client_id = True,
+                             client_secret=client_secret)
+    access_token = token['access_token']
+    return access_token
+
+def get_linkedin_data(scope, company_name):
+    access_token = get_linkedin_api_key(scope)
+    
     # Set the API endpoint and parameters
-    endpoint = "https://api.linkedin.com/v2/organizationAcls?q=roleAssignee&role=ADMINISTRATOR&projection=(elements*(organization~(localizedName,description)))"
-    params = {
-        "format": "json"
-    }
+    endpoint = f"https://api.linkedin.com/rest/organizations?q=vanityName&vanityName={company_name}"
 
     # Set the headers with your access token
     headers = {
-        "Authorization": f"Bearer {linkedin_api_key}"
+        "Authorization": f"Bearer {access_token}",
+        "X-Restli-Protocol-Version": "2.0.0",
+        "LinkedIn-Version": "202210",
     }
 
     # Send the API request and parse the JSON response
-    response = requests.get(endpoint, params=params, headers=headers)
-    data = json.loads(response.content)
+    response = requests.get(endpoint, headers=headers)
+    data = response.json()
 
     # Print the name and description of each organization
     for element in data["elements"]:
-        organization = element["organization"]
-        name = organization["localizedName"]
-        description = organization["description"]
-
+        name = element["localizedName"]
+        description = element["localizedWebsite"]
+        
         print(f"Name: {name}")
-        print(f"Description: {description}\n")
+        print(f"Web: {description}\n")
     return data
 
 
