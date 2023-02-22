@@ -6,7 +6,8 @@ import tweepy
 import pandas as pd
 from requests_oauthlib import OAuth2Session
 
-TWEETS_TO_GET = 10
+
+TWEETS_TO_GET = 100
 
 def get_linkedin_api_key(scope):
     redirect_uri = settings.LINKEDIN_REDIRECT_URL
@@ -50,7 +51,7 @@ def get_linkedin_data(scope, company_name):
     return data
 
 
-def query_tweets(api, query):
+def query_tweets(api, query, result_type='mixed'):
     query = query + ' -filter:retweets'
 
     # Helper function for handling pagination in our search and handle rate limits
@@ -68,37 +69,47 @@ def query_tweets(api, query):
     return limit_handled(tweepy.Cursor(api.search_tweets,
                             q=query,
                             lang=settings.LANGUAGE,
-                            result_type="mixed").items(TWEETS_TO_GET))
+                            result_type=result_type).items(TWEETS_TO_GET))
 
 
 def extract_useful_data(tweets, tweet_list):
     # https://developer.twitter.com/en/docs/twitter-api/v1/tweets/search/api-reference/get-search-tweets#example-response
     for tweet in tweets:
+
         tweet_dict = {
             'text': tweet.text,
             'user_location': tweet.user.location,
             'date': tweet.created_at,
             'is_popular': tweet.metadata['result_type'] == 'popular', #could this be a "weight" to be considered?
             'retweets': tweet.retweet_count, #could this be a "weight" to be considered?
-            'favorites': tweet.favorite_count, #could this be a "weight" to be considered?
-            'location_geo': tweet.geo,
-            'location_coord': tweet.coordinates
+            'favorites': tweet.favorite_count #could this be a "weight" to be considered?
         }
+        if tweet.place is not None:
+            tweet_dict['place_fullname'] = tweet.place.full_name
+            tweet_dict['country_code'] = tweet.place.country_code
+            tweet_dict['country'] = tweet.place.country
+            tweet_dict['place_type'] = tweet.place.place_type
+            tweet_dict['coordinates'] = tweet.place.bounding_box.coordinates
         tweet_list.append(tweet_dict)
 
 
 def get_twitter_data(company_name):
+    #API limit:  900 requests/15 minutes are allowed
+    # Twitter’s standard search API only “searches against a sampling of recent Tweets published in the past 7 days.”
     auth = tweepy.AppAuthHandler(settings.TWITTER_CONSUMER_KEY, settings.TWITTER_CONSUMER_SECRET)
 
     api = tweepy.API(auth, wait_on_rate_limit=True)
     if not api:
         print("Check you authentication data")
 
-    hashtag_tweets = query_tweets(api, f'#{company_name}')
-    oficial_mention_tweets = query_tweets(api, f'@{company_name}')
+    hashtag_popular_tweets = query_tweets(api, f'#{company_name}', 'popular')
+    hashtag_recent_tweets = query_tweets(api, f'#{company_name}', 'recent')
+    oficial_popular_mention_tweets = query_tweets(api, f'@{company_name}', 'popular')
+    oficial_recent_mention_tweets = query_tweets(api, f'@{company_name}', 'recent')
 
     tweet_list = []
-    extract_useful_data(hashtag_tweets, tweet_list)
-    extract_useful_data(oficial_mention_tweets, tweet_list)
-
+    extract_useful_data(hashtag_popular_tweets, tweet_list)
+    extract_useful_data(hashtag_recent_tweets, tweet_list)
+    extract_useful_data(oficial_popular_mention_tweets, tweet_list)
+    extract_useful_data(oficial_recent_mention_tweets, tweet_list)
     return pd.DataFrame(tweet_list)
