@@ -6,3 +6,8 @@ LANGUAGE='en'
 LINKEDIN_CLIENT_ID = "change-me"
 LINKEDIN_CLIENT_SECRET = "change-me"
 LINKEDIN_REDIRECT_URL = "change-me"
+
+FACEBOOK_TOKEN = 'change-me'
+FACEBOOK_APP_ID = 'change-me'
+FACEBOOK_APP_SECRET_KEY = 'change-me'
+FACEBOOK_REDIRECT_URI = 'change-me'
