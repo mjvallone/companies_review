@@ -51,6 +51,60 @@ def get_linkedin_data(scope, company_name):
     return data
 
 
+def get_facebook_api_key(scope):
+    return []
+    AUTHORIZE_URL = 'https://www.facebook.com/v12.0/dialog/oauth'
+    PERMISSIONS = ['public_profile', 'email']
+    authorize_url = f'{AUTHORIZE_URL}?client_id={settings.FACEBOOK_APP_ID}&redirect_uri={settings.FACEBOOK_REDIRECT_URI}&scope={",".join(PERMISSIONS)}'
+
+    print (authorize_url)
+    # Redirect the user to the authorization endpoint
+    print(f'Please go to the following URL to authorize the app: {authorize_url}')
+    authorization_code = input('Enter the authorization code: ')
+
+    # Define the URL for Facebook's OAuth 2.0 access token endpoint
+    ACCESS_TOKEN_URL = 'https://graph.facebook.com/v16.0/oauth/access_token'
+
+    # Send a request to the access token endpoint to exchange the authorization code for an access token
+    response = requests.get(f'{ACCESS_TOKEN_URL}?client_id={settings.FACEBOOK_APP_ID}&redirect_uri={settings.FACEBOOK_REDIRECT_URI}&client_secret={settings.FACEBOOK_APP_SECRET_KEY}&code={authorization_code}')
+
+    # Parse the access token from the response
+    access_token = response.json()['access_token']
+
+    # Use the access token to make API requests on behalf of the user
+    # For example, you can use the following code to retrieve the user's public profile:
+    response = requests.get(f'https://graph.facebook.com/me?fields=id,name,email&access_token={access_token}')
+    user_profile = response.json()
+    print(f'Hello, {user_profile["name"]}! Your email address is {user_profile["email"]}.')
+
+
+def get_facebook_data(company_name):
+    # Make the API request to search for the company's ID based on its name
+    endpoint = f'https://graph.facebook.com/v16.0/search?type=page&q={company_name}&access_token={settings.FACEBOOK_TOKEN}'
+
+    response = requests.get(endpoint)
+    data = json.loads(response.text)
+
+    # Extract the ID of the first search result (which should be the company you're looking for)
+    company_id = data['data'][0]['id']
+
+    # Make another API request to retrieve the company profile using its ID
+    endpoint = f'https://graph.facebook.com/v16.0/{company_id}?fields=id,name,about,website&access_token={settings.FACEBOOK_TOKEN}'
+
+    response = requests.get(endpoint)
+    data = json.loads(response.text)
+
+    # Extract the information you're interested in from the response
+    company_name = data['name']
+    company_about = data.get('about', '')
+    company_website = data.get('website', '')
+
+    print(f'Company name: {company_name}')
+    print(f'About: {company_about}')
+    print(f'Website: {company_website}')
+    return []
+
+
 def query_tweets(api, query, result_type='mixed'):
     query = query + ' -filter:retweets'
 
