@@ -1,5 +1,7 @@
 import streamlit as st
+import pandas as pd
 from data_ingestion import get_linkedin_data, get_twitter_data
+from data_transformation import transform_twitter_data, calculate_company_index, get_sentiments, get_top_pos_neg_tokens
 
 
 def update_progress_bar(progress_bar, progress, text):
@@ -21,9 +23,14 @@ def clean_and_transform_data(progress_bar,linkedin_data, twitter_data):
   # e.g. @amazon i want to return my product boat smart watch pls help this is my register no.8787042107
   # Amazon Free Same Day Delivery and Free One Day  with Amazon Prime.  Learn More Here. https://t.co/9Up3AX0sua via @amazon
   
-  # TODO we could calculate here general index, get sentiment out of data texts
+  linkedin_sentiments_df = get_sentiments(linkedin_data)
+  twitter_sentiments_df = get_sentiments(twitter_data)
+  sentiments_df = pd.merge(linkedin_sentiments_df, twitter_sentiments_df)
+
+  company_index = calculate_company_index(linkedin_data, twitter_data, sentiments_df)
+  top_tokens = get_top_pos_neg_tokens(sentiments_df)
   update_progress_bar(progress_bar, 70, "Transforming data")
-  return linkedin_data, twitter_data
+  return company_index, sentiments_df, top_tokens
 
 
 def show_data(linkedin_data, twitter_data):
@@ -36,7 +43,7 @@ def show_data(linkedin_data, twitter_data):
 def get_company_review(company_name):
   progress_bar = st.progress(0, text="Searching data...")
   linkedin_data, twitter_data = ingest_data(progress_bar, company_name)
-  clean_and_transform_data(progress_bar, linkedin_data, twitter_data)
+  company_index, sentiments_df, top_pos_neg_tokens = clean_and_transform_data(progress_bar, linkedin_data, twitter_data)
   update_progress_bar(progress_bar, 100, "Process finished")
   show_data(linkedin_data, twitter_data)
 
@@ -55,3 +62,11 @@ if __name__ == '__main__':
     else:
       get_company_review(company_name)
 
+
+# to run it only through terminal - you should comment the code similar above this
+# if __name__ == '__main__':
+#   company_name = ''.join(sys.argv[1:])
+#   if not company_name:
+#     print("You should add a company name as parameter")
+#   else:
+#     get_company_review(company_name)
