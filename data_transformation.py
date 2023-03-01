@@ -1,6 +1,8 @@
 import re
 import pandas as pd
 from transformers import pipeline
+from wordcloud import STOPWORDS
+
 
 MODEL_PATH = 'cardiffnlp/twitter-roberta-base-sentiment-latest'
 #https://huggingface.co/cardiffnlp/twitter-roberta-base-sentiment-latest
@@ -88,12 +90,45 @@ def calculate_company_index(data):
     return company_index
 
 
-def get_top_pos_neg_tokens(data):
-    top_pos_neg_tokens = pd.DataFrame()
-    return top_pos_neg_tokens
+def count_words(text, stop_words):
+    words_list = text.split()
+    words_list = [word for word in words_list if not word in stop_words]
+    freq = [words_list.count(w) for w in words_list]
+    return dict(list(zip(words_list,freq)))
 
 
-def calculate_data_to_show(data):
+def count_words_all_texts(serie_text, stop_words):
+    text = serie_text.to_list()
+    text = ' '.join(text)
+    return count_words(text, stop_words)
+
+def sort_df_freq_words(serie_text, stop_words):
+    dict_word = count_words_all_texts(serie_text, stop_words)
+    df = pd.DataFrame(dict_word.items(), columns=['Word', 'Freq'])
+    return df.sort_values('Freq',ascending=False)
+
+
+def get_ranked_tweets(data, stop_words, filter_condition):
+    tweets = data['processed_text'][data['sentiment_label']==filter_condition]
+    df_tw = sort_df_freq_words(tweets, stop_words)
+    df_tw = df_tw[0:10] #FIXME how many should we show?
+    df_tw['positive'] = True if filter_condition=='positive' else False
+    return df_tw
+
+
+def get_top_pos_neg_tokens(company_name, data):
+    # FIXME from where "https", "co", "RT" came? should we remove them when cleaning data?
+    stop_words = company_name.split(' ') + ["https", "co", "RT"] + list(STOPWORDS)
+
+    df_positive_tw = get_ranked_tweets(data, stop_words, 'positive')
+    df_negative_tw = get_ranked_tweets(data, stop_words, 'negative')
+
+    #TODO is company_name in that ranking? should we remove it?
+    top_tokens = pd.concat([df_positive_tw, df_negative_tw])
+    return top_tokens
+
+
+def calculate_data_to_show(company_name, data):
   company_index = calculate_company_index(data)
-  top_tw_tokens = get_top_pos_neg_tokens(data)
+  top_tw_tokens = get_top_pos_neg_tokens(company_name, data)
   return company_index, top_tw_tokens

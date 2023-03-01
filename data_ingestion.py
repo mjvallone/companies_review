@@ -66,6 +66,7 @@ def query_tweets(api, query, result_type='mixed'):
                 break
 
     #result_type=mixed: Include both popular and real time results in the response
+    #FIXME we are requesting more tweets than returned, we should limit request response
     return limit_handled(tweepy.Cursor(api.search_tweets,
                             q=query,
                             lang=settings.LANGUAGE,
