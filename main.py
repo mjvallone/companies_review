@@ -36,11 +36,18 @@ def clean_and_transform_data(progress_bar,linkedin_data, twitter_data):
   return linkedin_data, twitter_data
 
 
-def show_data(linkedin_data, twitter_data):
+def show_data(linkedin_data, twitter_data, top_tw_tokens):
   st.header("Linkedin data")
   st.dataframe(linkedin_data)
+
   st.header("Twitter data")
   st.dataframe(twitter_data)
+
+  st.header("Twitter top positive tokens")
+  st.dataframe(top_tw_tokens[top_tw_tokens['positive']])
+  
+  st.header("Twitter top negative tokens")
+  st.dataframe(top_tw_tokens[~top_tw_tokens['positive']])
 
 
 def get_company_review(company_name):
@@ -49,10 +56,10 @@ def get_company_review(company_name):
   linkedin_transformed_data, twitter_transformed_data = clean_and_transform_data(progress_bar, linkedin_data, twitter_data)
 
   # calculate_data_to_show(linkedin_transformed_data)  # TODO
-  tw_company_index, top_tw_tokens = calculate_data_to_show(twitter_transformed_data)
+  tw_company_index, top_tw_tokens = calculate_data_to_show(company_name, twitter_transformed_data)
   
   update_progress_bar(progress_bar, 100, "Process finished")
-  show_data(linkedin_transformed_data, twitter_transformed_data)
+  show_data(linkedin_transformed_data, twitter_transformed_data, top_tw_tokens)
 
 
 if __name__ == '__main__':
