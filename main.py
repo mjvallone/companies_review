@@ -20,13 +20,13 @@ def ingest_data(progress_bar, company_name):
   return linkedin_data, twitter_data
 
 
-def clean_and_transform_data(progress_bar,linkedin_data, twitter_data):
+def clean_and_transform_data(progress_bar,linkedin_data, twitter_data, use_location = True):
   # TODO I've seen company's ads or claims in tweets, should we clean them?
   # e.g. @amazon i want to return my product boat smart watch pls help this is my register no.8787042107
   # Amazon Free Same Day Delivery and Free One Day  with Amazon Prime.  Learn More Here. https://t.co/9Up3AX0sua via @amazon
 
   # transform_linkedin_data(linkedin_data) # TODO we need to figure out how to get data
-  transform_twitter_data(twitter_data)
+  transform_twitter_data(twitter_data, use_location)
 
   # get_sentiments(linkedin_data)
   get_sentiments(twitter_data)
