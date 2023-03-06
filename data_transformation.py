@@ -70,34 +70,30 @@ def count_emoji(text):
     return {'positive': positive, 'negative':negative}
 
 
-def get_name_form_flag(data):
-    country = pycountry.countries.get(flag=data)
-    if country != None:
-        return country.name
-    else:
-        return data
+def get_name_from_flag(data):
+    return pycountry.countries.get(flag=data).name if pycountry.countries.get(flag=data) else data
 
 
 dict_countries = {
-    'usa': 'usa',
-    'united states': 'usa',
-    'us': 'usa',
-    'u.s.': 'usa',
-    'united states of america': 'usa',
-    'estados unidos': 'usa',
-    'estados unidos de américa': 'usa',
-    'united kingdom': 'uk',
-    'gb': 'uk',
-    'great britain': 'uk',
-    'britain': 'uk',
-    'british isles': 'uk',
-    'reino unido': 'uk',
-    'gran bretaña': 'uk',
-    'england' : 'uk'
+    'usa': 'us',
+    'united states': 'us',
+    'us': 'us',
+    'u.s.': 'us',
+    'united states of america': 'us',
+    'estados unidos': 'us',
+    'estados unidos de américa': 'us',
+    'united kingdom': 'gb',
+    'gb': 'gb',
+    'great britain': 'gb',
+    'britain': 'gb',
+    'british isles': 'gb',
+    'reino unido': 'gb',
+    'gran bretaña': 'gb',
+    'england' : 'gb'
 } #TODO complete with the most frequent countries names
 
 
-def unificate_countries_name(country_name, dict_countries):
+def unify_countries_name(country_name):
     country_name = country_name.lower()
     if country_name in dict_countries:
         return dict_countries[country_name]
@@ -108,20 +104,26 @@ def unificate_countries_name(country_name, dict_countries):
 list_countries = ['USA', 'UK', 'india'] #TODO complete with the most frequent countries
 
 
-def extract_country(text, list_countries):
+def extract_country(text):
     for country in list_countries:
         pattern = r'\b{}\b'.format(country)
         search_pattern = re.search(pattern, text, flags=re.IGNORECASE)
-        if search_pattern:
-            return search_pattern.group()
-    else:
+        return search_pattern.group() if search_pattern else text
+
+
+def process_location(text):
+    if not isinstance(text, str):
         return text
+    
+    text = get_name_from_flag(text)
+    text = unify_countries_name(text)
+    text = extract_country(text)
+    
+    return text
 
 
 def transform_user_location(data):
-    data['user_location_process'] = data['user_location'].apply(lambda x: get_name_form_flag(x) if type(x) == str else x)
-    data['user_location_process'] = data['user_location_process'].apply(lambda x: unificate_countries_name(x, dict_countries) if type(x) == str else x)
-    data['user_location_process'] = data['user_location_process'].apply(lambda x: extract_country(x, list_countries) if type(x) == str else x)
+    data['user_location_process'] = data['user_location'].apply(lambda x: process_location(x))
 
 
 def get_lat_lon(country):
