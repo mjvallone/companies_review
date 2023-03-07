@@ -5,3 +5,6 @@ streamlit==1.18.1
 transformers==4.26.1
 tensorflow==2.11.0
 wordcloud==1.8.2.2
+pycountry==22.3.5
+numpy==1.24.2
+geopy==2.3.0

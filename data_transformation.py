@@ -1,8 +1,10 @@
 import re
+import pycountry
+import numpy as np
 import pandas as pd
-from transformers import pipeline
 from wordcloud import STOPWORDS
-
+from transformers import pipeline
+from geopy.geocoders import Nominatim
 
 MODEL_PATH = 'cardiffnlp/twitter-roberta-base-sentiment-latest'
 #https://huggingface.co/cardiffnlp/twitter-roberta-base-sentiment-latest
@@ -68,11 +70,93 @@ def count_emoji(text):
     return {'positive': positive, 'negative':negative}
 
 
-def transform_twitter_data(data):
+def get_name_from_flag(data):
+    return pycountry.countries.get(flag=data).name if pycountry.countries.get(flag=data) else data
+
+
+dict_countries = {
+    'usa': 'us',
+    'united states': 'us',
+    'us': 'us',
+    'u.s.': 'us',
+    'united states of america': 'us',
+    'estados unidos': 'us',
+    'estados unidos de américa': 'us',
+    'united kingdom': 'gb',
+    'gb': 'gb',
+    'great britain': 'gb',
+    'britain': 'gb',
+    'british isles': 'gb',
+    'reino unido': 'gb',
+    'gran bretaña': 'gb',
+    'england' : 'gb'
+} #TODO complete with the most frequent countries names
+
+
+def unify_countries_name(country_name):
+    country_name = country_name.lower()
+    if country_name in dict_countries:
+        return dict_countries[country_name]
+    else:
+        return country_name
+
+
+list_countries = ['USA', 'UK', 'india'] #TODO complete with the most frequent countries
+
+
+def extract_country(text):
+    for country in list_countries:
+        pattern = r'\b{}\b'.format(country)
+        search_pattern = re.search(pattern, text, flags=re.IGNORECASE)
+        return search_pattern.group() if search_pattern else text
+
+
+def process_location(text):
+    if not isinstance(text, str):
+        return text
+    
+    text = get_name_from_flag(text)
+    text = unify_countries_name(text)
+    text = extract_country(text)
+    
+    return text
+
+
+def transform_user_location(data):
+    data['user_location_process'] = data['user_location'].apply(lambda x: process_location(x))
+
+
+def get_lat_lon(country):
+    try:
+        geolocalizador = Nominatim(user_agent="my_app")
+        localizacion = geolocalizador.geocode(country)
+        return localizacion.latitude, localizacion.longitude
+    except:
+        return None, None
+   
+   
+def create_dic_lat_lon(serie):
+    list_counties = serie.value_counts().index
+    lat_lon = map(get_lat_lon, list_counties)
+    return dict(list(zip(list_counties, lat_lon)))
+
+
+def apply_lat_lon(place, serie):
+    countries_lat_lon = create_dic_lat_lon(serie)
+    if place in countries_lat_lon:
+        return countries_lat_lon[place]
+    else:
+        return place
+
+
+def transform_twitter_data(data, use_location = True):
     data.rename(columns={'text': 'original_text'}, inplace=True)
     data['processed_text'] = data['original_text'].apply(lambda x: process_data(x))
     data['emojis'] = data['processed_text'].apply(lambda x: count_emoji(x))
-
+    
+    if use_location:
+        transform_user_location(data)
+        data['lat_lon'] = data['user_location_process'].apply(lambda x: apply_lat_lon(x,data['user_location_process'] if type(x) == str else x))
 
 def get_sentiments(data):
     sentiment_pipeline = pipeline(model=MODEL_PATH)
