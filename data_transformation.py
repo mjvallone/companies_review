@@ -25,7 +25,7 @@ def analysis_emoji(text):
     return text
 
 
-def remove_emojis(data):
+def remove_emojis(text):
     emoj = re.compile("["
         u"\U0001F600-\U0001F64F"  # emoticons
         u"\U0001F300-\U0001F5FF"  # symbols & pictographs
@@ -51,15 +51,16 @@ def remove_emojis(data):
 
 def process_data(text):
     text = text.lower()                                             # Lowercases the string
-    text = re.sub('@[^\s]+', '', text)                              # Removes usernames
-    text= re.sub('((www\.[^\s]+)|(https?://[^\s]+))', ' ', text)    # Remove URLs
+    text = re.sub("@[^\s]+", "", text)                              # Removes usernames
+    text= re.sub("((www\.[^\s]+)|(https?://[^\s]+))", " ", text)    # Remove URLs
     text = re.sub(r"\d+", " ", str(text))                           # Removes all digits
-    text = re.sub('&quot;'," ", text)                               # Remove (&quot;) 
+    text = re.sub("&quot;"," ", text)                               # Remove (&quot;)
+    text = re.sub("rt", " ", text)                                  # Remove RT
     text = analysis_emoji(text)                                     # Replaces Emojis  #TODO If we use a HF model we don't need to replace emojis
     text = remove_emojis(text)                                      # Removes all Emojis #TODO If we use a HF model we don't need to remove emojis
     text = re.sub(r"\b[a-zA-Z]\b", "", str(text))                   # Removes all single characters
     text = re.sub(r"[^\w\s]", " ", str(text))                       # Removes all punctuations
-    text = re.sub(r'(.)\1+', r'\1\1', text)                         # Convert more than 2 letter repetitions to 2
+    text = re.sub(r"(.)\1+", r"\1\1", text)                         # Convert more than 2 letter repetitions to 2
     text = re.sub(r"\s+", " ", str(text))                           # Replaces double spaces with single space    
     return text
 
@@ -202,7 +203,7 @@ def get_ranked_tweets(data, stop_words, filter_condition):
 
 def get_top_pos_neg_tokens(company_name, data):
     # FIXME from where "https", "co", "RT" came? should we remove them when cleaning data?
-    stop_words = company_name.split(' ') + ["https", "co", "RT"] + list(STOPWORDS)
+    stop_words = company_name.split(' ') + ["co"] + list(STOPWORDS)
 
     df_positive_tw = get_ranked_tweets(data, stop_words, 'positive')
     df_negative_tw = get_ranked_tweets(data, stop_words, 'negative')
