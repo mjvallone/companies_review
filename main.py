@@ -1,7 +1,7 @@
 import streamlit as st
-import pandas as pd
 from data_ingestion import get_linkedin_data, get_twitter_data
 from data_transformation import transform_twitter_data, get_sentiments, calculate_data_to_show
+import matplotlib.pyplot as plt
 
 
 def update_progress_bar(progress_bar, progress, text):
@@ -29,6 +29,7 @@ def clean_and_transform_data(progress_bar,linkedin_data, twitter_data, use_locat
   transform_twitter_data(twitter_data, use_location)
 
   # get_sentiments(linkedin_data)
+  update_progress_bar(progress_bar, 60, "Getting sentiments")
   get_sentiments(twitter_data)
 
   update_progress_bar(progress_bar, 70, "Transforming data")
@@ -37,9 +38,10 @@ def clean_and_transform_data(progress_bar,linkedin_data, twitter_data, use_locat
 
 
 def show_data(linkedin_data, twitter_data, top_tw_tokens):
-  st.header("Linkedin data")
-  st.dataframe(linkedin_data)
+  # st.header("Linkedin data")
+  # st.dataframe(linkedin_data)
 
+  # comment it once we are not in "dev mode"
   st.header("Twitter data")
   st.dataframe(twitter_data)
 
@@ -48,6 +50,16 @@ def show_data(linkedin_data, twitter_data, top_tw_tokens):
   
   st.header("Twitter top negative tokens")
   st.dataframe(top_tw_tokens[~top_tw_tokens['positive']])
+  
+  st.header("Twitter sentiments pie diagram")
+  fig1, ax1 = plt.subplots()
+  ax1.pie(
+    twitter_data['sentiment_label'].value_counts().tolist(), 
+    labels=twitter_data['sentiment_label'].value_counts().index.tolist(), 
+    autopct='%1.1f%%'
+  )
+  ax1.axis('equal')
+  st.pyplot(fig1)  
 
 
 def get_company_review(company_name):

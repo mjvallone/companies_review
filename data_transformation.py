@@ -6,8 +6,8 @@ from wordcloud import STOPWORDS
 from transformers import pipeline
 from geopy.geocoders import Nominatim
 
-MODEL_PATH = 'cardiffnlp/twitter-roberta-base-sentiment-latest'
-#https://huggingface.co/cardiffnlp/twitter-roberta-base-sentiment-latest
+# MODEL_PATH = 'cardiffnlp/twitter-roberta-base-sentiment-latest' #58M tweets english
+MODEL_PATH = 'finiteautomata/bertweet-base-sentiment-analysis' #40k tweets english
 
 def analysis_emoji(text):
     # Smile -- :), : ), :-), (:, ( :, (-:, :') , :O
@@ -46,12 +46,13 @@ def remove_emojis(text):
         u"\ufe0f"  # dingbats
         u"\u3030"
                       "]+", re.UNICODE)
-    return re.sub(emoj, '', data)
+    return re.sub(emoj, '', text)
 
 
 def process_data(text):
     text = text.lower()                                             # Lowercases the string
     text = re.sub("@[^\s]+", "", text)                              # Removes usernames
+    text = re.sub('rt[\s]+', '', text)                              # Removes RT
     text= re.sub("((www\.[^\s]+)|(https?://[^\s]+))", " ", text)    # Remove URLs
     text = re.sub(r"\d+", " ", str(text))                           # Removes all digits
     text = re.sub("&quot;"," ", text)                               # Remove (&quot;)
@@ -161,11 +162,15 @@ def transform_twitter_data(data, use_location = True):
 
 def get_sentiments(data):
     sentiment_pipeline = pipeline(model=MODEL_PATH)
-
+    sentiments_dict = {
+        'POS': 'positive',
+        'NEG': 'negative',
+        'NEU': 'neutral'
+    }
     data['output_clean'] = data['processed_text'].apply(lambda tweet: sentiment_pipeline(tweet))
-    data['sentiment_label'] = data['output_clean'].apply(lambda dic: dic[0]['label'])
+    data['sentiment_label'] = data['output_clean'].apply(lambda dic: sentiments_dict[dic[0]['label']])
     data['sentiment_score'] = data['output_clean'].apply(lambda dic: dic[0]['score'])
-    #TODO drop output_clean?
+    data.drop(columns=['output_clean'], inplace=True)
 
 
 def calculate_company_index(data):
@@ -194,7 +199,7 @@ def sort_df_freq_words(serie_text, stop_words):
 
 
 def get_ranked_tweets(data, stop_words, filter_condition):
-    tweets = data['processed_text'][data['sentiment_label']==filter_condition]
+    tweets = data['original_text'][data['sentiment_label']==filter_condition]
     df_tw = sort_df_freq_words(tweets, stop_words)
     df_tw = df_tw[0:10] #FIXME how many should we show?
     df_tw['positive'] = True if filter_condition=='positive' else False
