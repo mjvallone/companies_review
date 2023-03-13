@@ -52,7 +52,7 @@ def remove_emojis(text):
 def process_data(text):
     text = text.lower()                                             # Lowercases the string
     text = re.sub("@[^\s]+", "", text)                              # Removes usernames
-    text = re.sub('RT[\s]+', '', text)                              # Removes RT
+    text = re.sub('rt[\s]+', '', text)                              # Removes RT
     text= re.sub("((www\.[^\s]+)|(https?://[^\s]+))", " ", text)    # Remove URLs
     text = re.sub(r"\d+", " ", str(text))                           # Removes all digits
     text = re.sub("&quot;"," ", text)                               # Remove (&quot;)
