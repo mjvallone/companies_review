@@ -73,7 +73,7 @@ def count_emoji(text):
 
 
 def get_name_from_flag(data):
-    return pycountry.countries.get(flag=data).name if pycountry.countries.get(flag=data) else data
+    return pycountry.countries.get(flag=data).alpha_2 if pycountry.countries.get(flag=data) else data
 
 
 dict_countries = {
@@ -85,14 +85,15 @@ dict_countries = {
     'estados unidos': 'us',
     'estados unidos de américa': 'us',
     'united kingdom': 'gb',
-    'gb': 'gb',
+    'uk': 'gb',
     'great britain': 'gb',
     'britain': 'gb',
     'british isles': 'gb',
     'reino unido': 'gb',
     'gran bretaña': 'gb',
-    'england' : 'gb'
-} #TODO complete with the most frequent countries names
+    'england' : 'gb',
+    'london' : 'gb'
+} #TODO complete with the most frequent countries namess
 
 
 def unify_countries_name(country_name):
@@ -103,14 +104,16 @@ def unify_countries_name(country_name):
         return country_name
 
 
-list_countries = ['USA', 'UK', 'india'] #TODO complete with the most frequent countries
+list_countries = ['USA', 'UK', 'INDIA', 'LONDON', 'ENGLAND', 'FRANCE', 'CANADA'] #TODO complete with the most frequent countries
 
 
 def extract_country(text):
     for country in list_countries:
         pattern = r'\b{}\b'.format(country)
         search_pattern = re.search(pattern, text, flags=re.IGNORECASE)
-        return search_pattern.group() if search_pattern else text
+        if search_pattern:
+            return search_pattern.group()
+    return text
 
 
 def process_location(text):
@@ -118,8 +121,8 @@ def process_location(text):
         return text
     
     text = get_name_from_flag(text)
-    text = unify_countries_name(text)
     text = extract_country(text)
+    text = unify_countries_name(text)
     
     return text
 
@@ -128,27 +131,33 @@ def transform_user_location(data):
     data['user_location_process'] = data['user_location'].apply(lambda x: process_location(x))
 
 
-def get_lat_lon(country):
-    try:
-        geolocalizador = Nominatim(user_agent="my_app")
-        localizacion = geolocalizador.geocode(country)
-        return localizacion.latitude, localizacion.longitude
-    except:
-        return None, None
-   
-   
-def create_dic_lat_lon(serie):
-    list_counties = serie.value_counts().index
-    lat_lon = map(get_lat_lon, list_counties)
-    return dict(list(zip(list_counties, lat_lon)))
+geolocator = Nominatim(user_agent="my-app")
+
+def create_lat_lon_dict(data):
+    locations = list(data.user_location_process.value_counts().index)[0:10] #Top 10 
+    # locations = list(data.value_counts().index[data.value_counts() > 10]) #TODO o todos los que aparecene +10?
+    results = {} 
+    
+    for location in locations:
+        try:
+            location_data = geolocator.geocode(location) 
+            results[location] = (location_data.latitude, location_data.longitude) 
+        except:
+            results[location] = None 
+            
+    return results
 
 
-def apply_lat_lon(place, serie):
-    countries_lat_lon = create_dic_lat_lon(serie)
-    if place in countries_lat_lon:
-        return countries_lat_lon[place]
+def search_lat_lon(country, dict_lat_lon):
+    if country in dict_lat_lon:
+        return dict_lat_lon[country]
     else:
-        return place
+        return None
+
+
+def get_lat_lon(data):
+    dict_lat_lon = create_lat_lon_dict(data)
+    data['lat_lon'] = data['user_location_process'].apply(lambda x: search_lat_lon(x, dict_lat_lon) if type(x) == str else x)
 
 
 def transform_twitter_data(data, use_location = True):
@@ -158,7 +167,7 @@ def transform_twitter_data(data, use_location = True):
     
     if use_location:
         transform_user_location(data)
-        data['lat_lon'] = data['user_location_process'].apply(lambda x: apply_lat_lon(x,data['user_location_process'] if type(x) == str else x))
+        get_lat_lon(data)
 
 def get_sentiments(data):
     sentiment_pipeline = pipeline(model=MODEL_PATH)
