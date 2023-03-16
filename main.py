@@ -1,4 +1,7 @@
+import folium
+import json
 import streamlit as st
+from streamlit_folium import folium_static
 from data_ingestion import get_linkedin_data, get_twitter_data
 from data_transformation import transform_twitter_data, get_sentiments, calculate_data_to_show
 import matplotlib.pyplot as plt
@@ -20,13 +23,13 @@ def ingest_data(progress_bar, company_name):
   return linkedin_data, twitter_data
 
 
-def clean_and_transform_data(progress_bar,linkedin_data, twitter_data, use_location = True):
+def clean_and_transform_data(progress_bar,linkedin_data, twitter_data):
   # TODO I've seen company's ads or claims in tweets, should we clean them?
   # e.g. @amazon i want to return my product boat smart watch pls help this is my register no.8787042107
   # Amazon Free Same Day Delivery and Free One Day  with Amazon Prime.  Learn More Here. https://t.co/9Up3AX0sua via @amazon
 
   # transform_linkedin_data(linkedin_data) # TODO we need to figure out how to get data
-  transform_twitter_data(twitter_data, use_location)
+  transform_twitter_data(twitter_data)
 
   # get_sentiments(linkedin_data)
   update_progress_bar(progress_bar, 60, "Getting sentiments")
@@ -36,6 +39,25 @@ def clean_and_transform_data(progress_bar,linkedin_data, twitter_data, use_locat
   
   return linkedin_data, twitter_data
 
+
+def create_map(data):
+    country_counts = data.groupby(["user_location_process"]).size().reset_index(name="Counts")
+    geo_json_data = json.load(open("custom.geo.json", encoding="utf-8"))
+    m = folium.Map(location=[0, 0], zoom_start=2)
+    folium.Choropleth(
+      geo_data=geo_json_data,
+      name='choropleth',
+      data=country_counts,
+      columns=['user_location_process', 'Counts'],
+      key_on='feature.properties.iso_a2',
+      # fill_color='YlGnBu',
+      fill_color='YlGnBu',
+      # fill_color='OrRd',
+      fill_opacity=1,
+      line_opacity=0.2,
+      nan_fill_color = "White",
+    ).add_to(m)
+    return m
 
 def show_data(linkedin_data, twitter_data, top_tw_tokens):
   # st.header("Linkedin data")
@@ -60,6 +82,9 @@ def show_data(linkedin_data, twitter_data, top_tw_tokens):
   )
   ax1.axis('equal')
   st.pyplot(fig1)  
+
+  st.header("World map publications")
+  folium_static(create_map(twitter_data))
 
 
 def get_company_review(company_name):
