@@ -115,7 +115,7 @@ def extract_country(text):
     return text
 
 
-def get_iso_2(text):
+def get_iso_2_for_country(text):
     iso_2 = None
     try:
         country_obj = pycountry.countries.get(name=text)
@@ -132,7 +132,7 @@ def process_location(text):
     text = get_name_from_flag(text)
     text = extract_country(text)
     text = unify_countries_name(text)
-    text = get_iso_2(text)
+    text = get_iso_2_for_country(text)
     
     return text
 

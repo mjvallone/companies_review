@@ -6,7 +6,6 @@ from data_visualization import select_data, create_map
 from data_transformation import transform_twitter_data, get_sentiments, calculate_data_to_show
 
 
-
 def update_progress_bar(progress_bar, progress, text):
   progress_bar.progress(progress, text=text)
 
@@ -64,6 +63,8 @@ def show_data(linkedin_data, twitter_data, top_tw_tokens):
   ax1.axis('equal')
   st.pyplot(fig1)
 
+
+def show_publications_map(twitter_data):
   st.header("World map publications")
   tab1, tab2, tab3 = st.tabs(["All", "Positive", "Negative"])
 
@@ -93,6 +94,7 @@ def get_company_review(company_name):
   
   update_progress_bar(progress_bar, 100, "Process finished")
   show_data(linkedin_transformed_data, twitter_transformed_data, top_tw_tokens)
+  show_publications_map(twitter_data)
 
 
 if __name__ == '__main__':
