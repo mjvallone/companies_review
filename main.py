@@ -1,10 +1,10 @@
-import folium
-import json
 import streamlit as st
+import matplotlib.pyplot as plt
 from streamlit_folium import folium_static
 from data_ingestion import get_linkedin_data, get_twitter_data
+from data_visualization import select_data, create_map
 from data_transformation import transform_twitter_data, get_sentiments, calculate_data_to_show
-import matplotlib.pyplot as plt
+
 
 
 def update_progress_bar(progress_bar, progress, text):
@@ -40,25 +40,6 @@ def clean_and_transform_data(progress_bar,linkedin_data, twitter_data):
   return linkedin_data, twitter_data
 
 
-def create_map(data):
-    country_counts = data.groupby(["user_location_process"]).size().reset_index(name="Counts")
-    geo_json_data = json.load(open("custom.geo.json", encoding="utf-8"))
-    m = folium.Map(location=[0, 0], zoom_start=2)
-    folium.Choropleth(
-      geo_data=geo_json_data,
-      name='choropleth',
-      data=country_counts,
-      columns=['user_location_process', 'Counts'],
-      key_on='feature.properties.iso_a2',
-      # fill_color='YlGnBu',
-      fill_color='YlGnBu',
-      # fill_color='OrRd',
-      fill_opacity=1,
-      line_opacity=0.2,
-      nan_fill_color = "White",
-    ).add_to(m)
-    return m
-
 def show_data(linkedin_data, twitter_data, top_tw_tokens):
   # st.header("Linkedin data")
   # st.dataframe(linkedin_data)
@@ -81,10 +62,25 @@ def show_data(linkedin_data, twitter_data, top_tw_tokens):
     autopct='%1.1f%%'
   )
   ax1.axis('equal')
-  st.pyplot(fig1)  
+  st.pyplot(fig1)
 
   st.header("World map publications")
-  folium_static(create_map(twitter_data))
+  tab1, tab2, tab3 = st.tabs(["All", "Positive", "Negative"])
+
+  with tab1:
+    st.header("All publications")
+    country_counts = select_data(twitter_data, "All")
+    folium_static(create_map(country_counts))
+
+  with tab2:
+    st.header("Positive publication")
+    country_counts = select_data(twitter_data, "Positive")
+    folium_static(create_map(country_counts))
+  
+  with tab3:
+    st.header("Negative publications")
+    country_counts = select_data(twitter_data, "Negative")
+    folium_static(create_map(country_counts))
 
 
 def get_company_review(company_name):
