@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd
 from wordcloud import STOPWORDS
 from transformers import pipeline
-from geopy.geocoders import Nominatim
 
 # MODEL_PATH = 'cardiffnlp/twitter-roberta-base-sentiment-latest' #58M tweets english
 MODEL_PATH = 'finiteautomata/bertweet-base-sentiment-analysis' #40k tweets english
@@ -73,44 +72,57 @@ def count_emoji(text):
 
 
 def get_name_from_flag(data):
-    return pycountry.countries.get(flag=data).name if pycountry.countries.get(flag=data) else data
+    return pycountry.countries.get(flag=data).alpha_2 if pycountry.countries.get(flag=data) else data
 
 
 dict_countries = {
-    'usa': 'us',
-    'united states': 'us',
-    'us': 'us',
-    'u.s.': 'us',
-    'united states of america': 'us',
-    'estados unidos': 'us',
-    'estados unidos de américa': 'us',
-    'united kingdom': 'gb',
-    'gb': 'gb',
-    'great britain': 'gb',
-    'britain': 'gb',
-    'british isles': 'gb',
-    'reino unido': 'gb',
-    'gran bretaña': 'gb',
-    'england' : 'gb'
+    'USA': 'US',
+    'UNITED STATES': 'US',
+    'US': 'US',
+    'U.S.': 'US',
+    'UNITED STATES OF AMERICA': 'US',
+    'ESTADOS UNIDOS': 'US',
+    'ESTADOS UNIDOS DE AMÉRICA': 'US',
+    'UNITED KINGDOM': 'GB',
+    'UK': 'GB',
+    'GREAT BRITAIN': 'GB',
+    'BRITAIN': 'GB',
+    'BRITISH ISLES': 'GB',
+    'REINO UNIDO': 'GB',
+    'GRAN BRETAÑA': 'GB',
+    'ENGLAND' : 'GB',
+    'LONDON' : 'GB',
 } #TODO complete with the most frequent countries names
 
 
 def unify_countries_name(country_name):
-    country_name = country_name.lower()
+    country_name = country_name.upper()
     if country_name in dict_countries:
         return dict_countries[country_name]
     else:
         return country_name
 
 
-list_countries = ['USA', 'UK', 'india'] #TODO complete with the most frequent countries
+list_countries = ['USA', 'UK', 'INDIA', 'LONDON', 'ENGLAND', 'FRANCE', 'CANADA'] #TODO complete with the most frequent countries
 
 
 def extract_country(text):
     for country in list_countries:
         pattern = r'\b{}\b'.format(country)
         search_pattern = re.search(pattern, text, flags=re.IGNORECASE)
-        return search_pattern.group() if search_pattern else text
+        if search_pattern:
+            return search_pattern.group()
+    return text
+
+
+def get_iso_2_for_country(text):
+    iso_2 = None
+    try:
+        country_obj = pycountry.countries.get(name=text)
+        iso_2 = country_obj.alpha_2
+    except AttributeError:
+        iso_2 = text
+    return iso_2
 
 
 def process_location(text):
@@ -118,8 +130,9 @@ def process_location(text):
         return text
     
     text = get_name_from_flag(text)
-    text = unify_countries_name(text)
     text = extract_country(text)
+    text = unify_countries_name(text)
+    text = get_iso_2_for_country(text)
     
     return text
 
@@ -128,37 +141,11 @@ def transform_user_location(data):
     data['user_location_process'] = data['user_location'].apply(lambda x: process_location(x))
 
 
-def get_lat_lon(country):
-    try:
-        geolocalizador = Nominatim(user_agent="my_app")
-        localizacion = geolocalizador.geocode(country)
-        return localizacion.latitude, localizacion.longitude
-    except:
-        return None, None
-   
-   
-def create_dic_lat_lon(serie):
-    list_counties = serie.value_counts().index
-    lat_lon = map(get_lat_lon, list_counties)
-    return dict(list(zip(list_counties, lat_lon)))
-
-
-def apply_lat_lon(place, serie):
-    countries_lat_lon = create_dic_lat_lon(serie)
-    if place in countries_lat_lon:
-        return countries_lat_lon[place]
-    else:
-        return place
-
-
-def transform_twitter_data(data, use_location = True):
+def transform_twitter_data(data):
     data.rename(columns={'text': 'original_text'}, inplace=True)
     data['processed_text'] = data['original_text'].apply(lambda x: process_data(x))
     data['emojis'] = data['processed_text'].apply(lambda x: count_emoji(x))
-    
-    if use_location:
-        transform_user_location(data)
-        data['lat_lon'] = data['user_location_process'].apply(lambda x: apply_lat_lon(x,data['user_location_process'] if type(x) == str else x))
+    transform_user_location(data)
 
 def get_sentiments(data):
     sentiment_pipeline = pipeline(model=MODEL_PATH)
