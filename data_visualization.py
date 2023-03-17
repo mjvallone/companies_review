@@ -10,7 +10,7 @@ def create_map(country_counts):
       geo_data=geo_json_data,
       name='choropleth',
       data=country_counts,
-      columns=['user_location_process', 'Counts'],
+      columns=['user_location_process', 'Ratio'],
       key_on='feature.properties.iso_a2',
       fill_color='YlGnBu',
       fill_opacity=1,
@@ -23,10 +23,13 @@ def create_map(country_counts):
 def select_data(data, option):
     if option == 'All':
         data = data.groupby(["user_location_process"]).size().reset_index(name="Counts")
+        data['Rate'] = data['Ratio']/sum(data['Ratio'])
     elif option == 'Positive':
         data = data.groupby(["user_location_process", "sentiment_label" ]).size().reset_index(name="Counts")
         data = data[data['sentiment_label'] == 'positive']
+        data['Rate'] = data['Ratio']/sum(data['Ratio'])
     elif option == 'Negative':
         data = data.groupby(["user_location_process", "sentiment_label" ]).size().reset_index(name="Counts")
         data = data[data['sentiment_label'] == 'negative']
+        data['Rate'] = data['Ratio']/sum(data['Ratio'])
     return data
