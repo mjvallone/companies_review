@@ -147,6 +147,7 @@ def transform_twitter_data(data):
     data['emojis'] = data['processed_text'].apply(lambda x: count_emoji(x))
     transform_user_location(data)
 
+
 def get_sentiments(data):
     sentiment_pipeline = pipeline(model=MODEL_PATH)
     sentiments_dict = {
@@ -161,10 +162,13 @@ def get_sentiments(data):
 
 
 def calculate_company_index(data):
-    # TODO we should create kind of a formula to calculate company_index
-    # should we consider retweets, marked as favorite?
-    company_index = 0
-    return company_index
+    sentiment_weight = 0.7
+    engagement_weight = 0.3
+    # we normalize both scores to a value between 0 and 10
+    sentiment_score = (data['sentiment_score'].sum()/2)/10
+    engagement_score = (data['engagement'].sum() - data['engagement'].min())/(data['engagement'].max()-data['engagement'].min())
+    company_index = (sentiment_score * sentiment_weight) + (engagement_score * engagement_weight)
+    return round(company_index, 2)
 
 
 def count_words(text, stop_words):
@@ -178,6 +182,7 @@ def count_words_all_texts(serie_text, stop_words):
     text = serie_text.to_list()
     text = ' '.join(text)
     return count_words(text, stop_words)
+
 
 def sort_df_freq_words(serie_text, stop_words):
     dict_word = count_words_all_texts(serie_text, stop_words)
