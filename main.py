@@ -11,9 +11,9 @@ def update_progress_bar(progress_bar, progress, text):
 
 
 def ingest_data(progress_bar, company_name):
-  update_progress_bar(progress_bar, 35, "Getting Twitter data...")
+  update_progress_bar(progress_bar, 15, "Getting Twitter data...")
   twitter_data = get_twitter_data(company_name)
-  update_progress_bar(progress_bar, 55, f"{len(twitter_data)} posts obtained from Twitter")
+  update_progress_bar(progress_bar, 25, f"{len(twitter_data)} posts obtained from Twitter")
   return twitter_data
 
 
@@ -23,18 +23,18 @@ def clean_and_transform_data(progress_bar, twitter_data):
   # Amazon Free Same Day Delivery and Free One Day  with Amazon Prime.  Learn More Here. https://t.co/9Up3AX0sua via @amazon
   transform_twitter_data(twitter_data)
 
-  update_progress_bar(progress_bar, 60, "Getting sentiments")
+  update_progress_bar(progress_bar, 35, "Getting sentiments.. this may take a while")
   get_sentiments(twitter_data)
 
-  update_progress_bar(progress_bar, 70, "Transforming data")
+  update_progress_bar(progress_bar, 60, "Transforming data")
   
   return twitter_data
 
 
 def show_data(twitter_data):
   # comment it once we are not in "dev mode"
-  st.header("Twitter data")
-  st.dataframe(twitter_data)
+  with st.expander("See Twitter data"):
+    st.dataframe(twitter_data)
  
   st.header("Twitter sentiments pie diagram")
   fig1, ax1 = plt.subplots()
@@ -47,13 +47,14 @@ def show_data(twitter_data):
   st.pyplot(fig1)
 
 
-def show_top_tokens(twitter_data, top_tw_tokens):
+def show_top_tokens(top_tw_tokens):
   st.header("Twitter top tokens")
-  tab1, tab2 = st.tabs(["Positive", "Negative"])
-  with tab1:
+  col1, col2 = st.columns(2)
+  with col1:
+    st.header("Positive")
     st.dataframe(top_tw_tokens[top_tw_tokens['positive']])
-
-  with tab2:
+  with col2:
+    st.header("Negative")    
     st.dataframe(top_tw_tokens[~top_tw_tokens['positive']])
 
 
@@ -82,25 +83,29 @@ def get_company_review(company_name):
   twitter_data = ingest_data(progress_bar, company_name)
   twitter_transformed_data = clean_and_transform_data(progress_bar, twitter_data)
 
+  update_progress_bar(progress_bar, 75, "Process finished")
   tw_company_index, top_tw_tokens = calculate_data_to_show(company_name, twitter_transformed_data)
   
   update_progress_bar(progress_bar, 100, "Process finished")
   show_data(twitter_transformed_data)
-  show_top_tokens(twitter_transformed_data, top_tw_tokens)
+  show_top_tokens(top_tw_tokens)
   show_publications_map(twitter_data)
 
 
 if __name__ == '__main__':
   company_name = st.text_input("Write a company name you would like to get it review")
-  review_btn = st.button("Get review!")
-  clear_btn = st.button("Clear screen")
+  col1, col2 = st.columns(2)
+  with col1:
+    review_btn = st.button("Get review!")
+  with col2:
+    clear_btn = st.button("Clear screen")
 
   if clear_btn:
     st.empty()
 
   if review_btn:
     if not company_name:
-      st.write("You should add a company name")
+      st.warning("You should add a company name")
     else:
       get_company_review(company_name)
 
