@@ -71,7 +71,11 @@ def get_company_review(company_name):
   tw_company_index, top_tw_tokens = calculate_data_to_show(company_name, twitter_transformed_data)
   
   update_progress_bar(progress_bar, 100, "Process finished")
-  show_data(linkedin_transformed_data, twitter_transformed_data, top_tw_tokens)
+
+  st.header("Company index")
+  st.title(tw_company_index)
+
+  show_data(linkedin_transformed_data, twitter_transformed_data, top_tw_tokens)  
 
 
 if __name__ == '__main__':

@@ -81,9 +81,10 @@ def extract_useful_data(tweets, tweet_list):
             'text': tweet.text,
             'user_location': tweet.user.location,
             'date': tweet.created_at,
-            'is_popular': tweet.metadata['result_type'] == 'popular', #could this be a "weight" to be considered?
-            'retweets': tweet.retweet_count, #could this be a "weight" to be considered?
-            'favorites': tweet.favorite_count #could this be a "weight" to be considered?
+            'is_popular': tweet.metadata['result_type'] == 'popular',
+            'retweets': tweet.retweet_count,
+            'favorites': tweet.favorite_count,
+            'engagement': tweet.retweet_count+tweet.favorite_count
         }
         if tweet.place is not None:
             tweet_dict['place_fullname'] = tweet.place.full_name
