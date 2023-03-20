@@ -39,20 +39,14 @@ def clean_and_transform_data(progress_bar,linkedin_data, twitter_data):
   return linkedin_data, twitter_data
 
 
-def show_data(linkedin_data, twitter_data, top_tw_tokens):
+def show_data(linkedin_data, twitter_data):
   # st.header("Linkedin data")
   # st.dataframe(linkedin_data)
 
   # comment it once we are not in "dev mode"
   st.header("Twitter data")
   st.dataframe(twitter_data)
-
-  st.header("Twitter top positive tokens")
-  st.dataframe(top_tw_tokens[top_tw_tokens['positive']])
-  
-  st.header("Twitter top negative tokens")
-  st.dataframe(top_tw_tokens[~top_tw_tokens['positive']])
-  
+ 
   st.header("Twitter sentiments pie diagram")
   fig1, ax1 = plt.subplots()
   ax1.pie(
@@ -62,6 +56,16 @@ def show_data(linkedin_data, twitter_data, top_tw_tokens):
   )
   ax1.axis('equal')
   st.pyplot(fig1)
+
+
+def show_top_tokens(twitter_data, top_tw_tokens):
+  st.header("Twitter top tokens")
+  tab1, tab2 = st.tabs(["Positive", "Negative"])
+  with tab1:
+    st.dataframe(top_tw_tokens[top_tw_tokens['positive']])
+
+  with tab2:
+    st.dataframe(top_tw_tokens[~top_tw_tokens['positive']])
 
 
 def show_publications_map(twitter_data):
@@ -93,7 +97,8 @@ def get_company_review(company_name):
   tw_company_index, top_tw_tokens = calculate_data_to_show(company_name, twitter_transformed_data)
   
   update_progress_bar(progress_bar, 100, "Process finished")
-  show_data(linkedin_transformed_data, twitter_transformed_data, top_tw_tokens)
+  show_data(linkedin_transformed_data, twitter_transformed_data)
+  show_top_tokens(twitter_transformed_data, top_tw_tokens)
   show_publications_map(twitter_data)
 
 
