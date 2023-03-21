@@ -7,7 +7,7 @@ import pandas as pd
 from requests_oauthlib import OAuth2Session
 
 
-TWEETS_TO_GET = 100
+TWEETS_TO_GET = 1000
 
 def get_linkedin_api_key(scope):
     redirect_uri = settings.LINKEDIN_REDIRECT_URL
@@ -76,7 +76,6 @@ def query_tweets(api, query, result_type='mixed'):
 def extract_useful_data(tweets, tweet_list):
     # https://developer.twitter.com/en/docs/twitter-api/v1/tweets/search/api-reference/get-search-tweets#example-response
     for tweet in tweets:
-
         tweet_dict = {
             'text': tweet.text,
             'user_location': tweet.user.location,
@@ -114,4 +113,6 @@ def get_twitter_data(company_name):
     extract_useful_data(hashtag_recent_tweets, tweet_list)
     extract_useful_data(oficial_popular_mention_tweets, tweet_list)
     extract_useful_data(oficial_recent_mention_tweets, tweet_list)
-    return pd.DataFrame(tweet_list)
+    tweets = pd.DataFrame(tweet_list)
+    tweets['norm_engagement'] = (tweets['engagement'] - tweets['engagement'].min())/(tweets['engagement'].max()-tweets['engagement'].min())*10    
+    return tweets

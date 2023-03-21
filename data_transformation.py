@@ -162,12 +162,20 @@ def get_sentiments(data):
 
 
 def calculate_company_index(data):
-    sentiment_weight = 0.7
+    sentiment_weight = 0.6
     engagement_weight = 0.3
+    popular_weight = 0.1
     # we normalize both scores to a value between 0 and 10
-    sentiment_score = (data['sentiment_score'].sum()/2)/10
-    engagement_score = (data['engagement'].sum() - data['engagement'].min())/(data['engagement'].max()-data['engagement'].min())
-    company_index = (sentiment_score * sentiment_weight) + (engagement_score * engagement_weight)
+    sentiment_score = (data['sentiment_score'].sum())/10
+    engagement_score = (data['norm_engagement'].sum() - data['norm_engagement'].min())/(data['norm_engagement'].max()-data['norm_engagement'].min())
+    popular_df = data['is_popular'].astype(int)
+    popular_score = (popular_df.sum() - popular_df.min())/(popular_df.max()-popular_df.min())/10
+    #FIXME can be removed once we agree on this calculation
+    print(f"sentiment_score: {sentiment_score}")
+    print(f"engagement_score: {engagement_score}")
+    print(f"popular_score:{popular_score}")
+    company_index = (sentiment_score * sentiment_weight) + (engagement_score * engagement_weight) + (popular_weight * popular_score)
+    print(f"company_index: {company_index}")
     return round(company_index, 2)
 
 
