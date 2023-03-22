@@ -1,6 +1,5 @@
 import settings
 import requests
-import json
 import time
 import tweepy
 import pandas as pd
@@ -66,7 +65,6 @@ def query_tweets(api, query, result_type='mixed'):
                 break
 
     #result_type=mixed: Include both popular and real time results in the response
-    #FIXME we are requesting more tweets than returned, we should limit request response
     return limit_handled(tweepy.Cursor(api.search_tweets,
                             q=query,
                             lang=settings.LANGUAGE,
@@ -114,5 +112,5 @@ def get_twitter_data(company_name):
     extract_useful_data(oficial_popular_mention_tweets, tweet_list)
     extract_useful_data(oficial_recent_mention_tweets, tweet_list)
     tweets = pd.DataFrame(tweet_list)
-    tweets['norm_engagement'] = (tweets['engagement'] - tweets['engagement'].min())/(tweets['engagement'].max()-tweets['engagement'].min())*10    
+    tweets['norm_engagement'] = (tweets['engagement'] - tweets['engagement'].min())/(tweets['engagement'].max()-tweets['engagement'].min())
     return tweets
