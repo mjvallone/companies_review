@@ -1,13 +1,12 @@
 import settings
 import requests
-import json
 import time
 import tweepy
 import pandas as pd
 from requests_oauthlib import OAuth2Session
 
 
-TWEETS_TO_GET = 100
+TWEETS_TO_GET = 1000
 
 def get_linkedin_api_key(scope):
     redirect_uri = settings.LINKEDIN_REDIRECT_URL
@@ -66,7 +65,6 @@ def query_tweets(api, query, result_type='mixed'):
                 break
 
     #result_type=mixed: Include both popular and real time results in the response
-    #FIXME we are requesting more tweets than returned, we should limit request response
     return limit_handled(tweepy.Cursor(api.search_tweets,
                             q=query,
                             lang=settings.LANGUAGE,
