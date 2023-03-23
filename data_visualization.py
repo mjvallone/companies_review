@@ -2,7 +2,7 @@ import json
 import folium
 
 def create_map(country_counts):
-    geo_json_data = json.load(open("custom.geo.json", encoding="utf-8"))
+    geo_json_data = json.load(open("resources/custom.geo.json", encoding="utf-8"))
     m = folium.Map(location=[0, 0], zoom_start=2)
     folium.Choropleth(
       geo_data=geo_json_data,
