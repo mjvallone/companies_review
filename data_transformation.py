@@ -159,7 +159,7 @@ def get_sentiments(data):
     data['sentiment_label'] = data['output_clean'].apply(lambda dic: sentiments_dict[dic[0]['label']])
     data['sentiment_score'] = data['output_clean'].apply(lambda dic: dic[0]['score'])
     data.drop(columns=['output_clean'], inplace=True)    
-    data['norm_sentiment_score'] = (data['sentiment_score'] - data['sentiment_score'].min())/(data['sentiment_score'].max()-data['sentiment_score'].min())
+    
 
 
 def calculate_company_index(data):
@@ -167,15 +167,12 @@ def calculate_company_index(data):
     engagement_weight = 0.3
     popular_weight = 0.05
     # we normalize both scores to a value between 0 and 1
-    sentiment_score = data['norm_sentiment_score'].mean()
-    engagement_score = data['norm_engagement'].mean()
-    popular_score = data['is_popular'].astype(int).mean()
+    data['norm_engagement'] = (data['engagement'] - data['engagement'].min())/(data['engagement'].max()-data['engagement'].min())
+    data['norm_sentiment_score'] = (data['sentiment_score'] - data['sentiment_score'].min())/(data['sentiment_score'].max()-data['sentiment_score'].min())
     
-    #FIXME can be removed once we agree on this calculation
-    print(f"sentiment_score: {sentiment_score}")
-    print(f"engagement_score: {engagement_score * engagement_weight}")
-    print(f"popular_score:{popular_score}")
-    company_index = ((sentiment_score * sentiment_weight) + (engagement_score * engagement_weight) + (popular_score * popular_weight))*10
+    data['sentimental_index'] = data['norm_sentiment_score'] * sentiment_weight + data['norm_engagement'] * engagement_weight + data['is_popular'].astype(int) * popular_weight
+
+    company_index = data['sentimental_index'].mean()*100
     return round(company_index, 2)
 
 
