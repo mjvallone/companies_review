@@ -147,6 +147,7 @@ def transform_twitter_data(data):
     data['emojis'] = data['processed_text'].apply(lambda x: count_emoji(x))
     transform_user_location(data)
 
+
 def get_sentiments(data):
     sentiment_pipeline = pipeline(model=MODEL_PATH)
     sentiments_dict = {
@@ -157,14 +158,25 @@ def get_sentiments(data):
     data['output_clean'] = data['processed_text'].apply(lambda tweet: sentiment_pipeline(tweet))
     data['sentiment_label'] = data['output_clean'].apply(lambda dic: sentiments_dict[dic[0]['label']])
     data['sentiment_score'] = data['output_clean'].apply(lambda dic: dic[0]['score'])
-    data.drop(columns=['output_clean'], inplace=True)
+    data.drop(columns=['output_clean'], inplace=True)    
+    data['norm_sentiment_score'] = (data['sentiment_score'] - data['sentiment_score'].min())/(data['sentiment_score'].max()-data['sentiment_score'].min())
 
 
 def calculate_company_index(data):
-    # TODO we should create kind of a formula to calculate company_index
-    # should we consider retweets, marked as favorite?
-    company_index = 0
-    return company_index
+    sentiment_weight = 0.65
+    engagement_weight = 0.3
+    popular_weight = 0.05
+    # we normalize both scores to a value between 0 and 1
+    sentiment_score = data['norm_sentiment_score'].mean()
+    engagement_score = data['norm_engagement'].mean()
+    popular_score = data['is_popular'].astype(int).mean()
+    
+    #FIXME can be removed once we agree on this calculation
+    print(f"sentiment_score: {sentiment_score}")
+    print(f"engagement_score: {engagement_score * engagement_weight}")
+    print(f"popular_score:{popular_score}")
+    company_index = ((sentiment_score * sentiment_weight) + (engagement_score * engagement_weight) + (popular_score * popular_weight))*10
+    return round(company_index, 2)
 
 
 def count_words(text, stop_words):
@@ -178,6 +190,7 @@ def count_words_all_texts(serie_text, stop_words):
     text = serie_text.to_list()
     text = ' '.join(text)
     return count_words(text, stop_words)
+
 
 def sort_df_freq_words(serie_text, stop_words):
     dict_word = count_words_all_texts(serie_text, stop_words)

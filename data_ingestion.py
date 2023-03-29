@@ -74,14 +74,14 @@ def query_tweets(api, query, result_type='mixed'):
 def extract_useful_data(tweets, tweet_list):
     # https://developer.twitter.com/en/docs/twitter-api/v1/tweets/search/api-reference/get-search-tweets#example-response
     for tweet in tweets:
-
         tweet_dict = {
             'text': tweet.text,
             'user_location': tweet.user.location,
             'date': tweet.created_at,
-            'is_popular': tweet.metadata['result_type'] == 'popular', #could this be a "weight" to be considered?
-            'retweets': tweet.retweet_count, #could this be a "weight" to be considered?
-            'favorites': tweet.favorite_count #could this be a "weight" to be considered?
+            'is_popular': tweet.metadata['result_type'] == 'popular',
+            'retweets': tweet.retweet_count,
+            'favorites': tweet.favorite_count,
+            'engagement': tweet.retweet_count+tweet.favorite_count
         }
         if tweet.place is not None:
             tweet_dict['place_fullname'] = tweet.place.full_name
@@ -111,4 +111,6 @@ def get_twitter_data(company_name):
     extract_useful_data(hashtag_recent_tweets, tweet_list)
     extract_useful_data(oficial_popular_mention_tweets, tweet_list)
     extract_useful_data(oficial_recent_mention_tweets, tweet_list)
-    return pd.DataFrame(tweet_list)
+    tweets = pd.DataFrame(tweet_list)
+    tweets['norm_engagement'] = (tweets['engagement'] - tweets['engagement'].min())/(tweets['engagement'].max()-tweets['engagement'].min())
+    return tweets
