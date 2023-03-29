@@ -111,6 +111,4 @@ def get_twitter_data(company_name):
     extract_useful_data(hashtag_recent_tweets, tweet_list)
     extract_useful_data(oficial_popular_mention_tweets, tweet_list)
     extract_useful_data(oficial_recent_mention_tweets, tweet_list)
-    tweets = pd.DataFrame(tweet_list)
-    tweets['norm_engagement'] = (tweets['engagement'] - tweets['engagement'].min())/(tweets['engagement'].max()-tweets['engagement'].min())
-    return tweets
+    return pd.DataFrame(tweet_list)
