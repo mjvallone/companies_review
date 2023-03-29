@@ -23,7 +23,7 @@ def clean_and_transform_data(progress_bar, twitter_data):
   # Amazon Free Same Day Delivery and Free One Day  with Amazon Prime.  Learn More Here. https://t.co/9Up3AX0sua via @amazon
   transform_twitter_data(twitter_data)
 
-  update_progress_bar(progress_bar, 35, "Getting sentiments.. this may take a while")
+  update_progress_bar(progress_bar, 35, "Getting sentiments... this may take a while")
   get_sentiments(twitter_data)
 
   update_progress_bar(progress_bar, 60, "Transforming data")
@@ -81,19 +81,22 @@ def show_publications_map(twitter_data):
 def get_company_review(company_name):
   progress_bar = st.progress(0, text="Searching data...")
   twitter_data = ingest_data(progress_bar, company_name)
-  twitter_transformed_data = clean_and_transform_data(progress_bar, twitter_data)
+  if twitter_data.empty:
+    update_progress_bar(progress_bar, 2, "Process finished: Company not found")
+    st.image('resources/g182.png')
+  else:
+    twitter_transformed_data = clean_and_transform_data(progress_bar, twitter_data)
+    update_progress_bar(progress_bar, 75, "Process finished")
+    tw_company_index, top_tw_tokens = calculate_data_to_show(company_name, twitter_transformed_data)
+    
+    update_progress_bar(progress_bar, 100, "Process finished")
 
-  update_progress_bar(progress_bar, 75, "Process finished")
-  tw_company_index, top_tw_tokens = calculate_data_to_show(company_name, twitter_transformed_data)
-  
-  update_progress_bar(progress_bar, 100, "Process finished")
+    st.header("Company index")
+    st.title(tw_company_index)
 
-  st.header("Company index")
-  st.title(tw_company_index)
-
-  show_data(twitter_transformed_data)
-  show_top_tokens(top_tw_tokens)
-  show_publications_map(twitter_data)
+    show_data(twitter_transformed_data)
+    show_top_tokens(top_tw_tokens)
+    show_publications_map(twitter_data)
 
 
 if __name__ == '__main__':
